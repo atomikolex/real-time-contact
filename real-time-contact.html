@@ -1,0 +1,148 @@
+<!-- Imports polymer -->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-styles/paper-styles.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../gold-email-input/gold-email-input.html">
+<link rel="import" href="firebase.html">
+
+<!-- Defines element markup -->
+<dom-module id="real-time-contact">
+  <style>
+    :host {
+      display: block;
+      box-sizing: border-box;
+    }
+
+    #send {
+      margin: 15px 0 0 0;
+    }
+
+    #container {
+      display:-webkit-flex;
+      display:-ms-flexbox;
+      display:flex;
+      -webkit-flex-direction: row;
+          -ms-flex-direction: row;
+              flex-direction: row;
+      -webkit-flex-wrap: wrap;
+          -ms-flex-wrap: wrap;
+              flex-wrap: wrap;
+              justify-content: center;
+              align-content: center;
+              align-items: flex-start;
+      max-width: 1000px;
+      margin: auto;
+    }
+    
+    #container div {
+      flex: 1 1 0;
+    }
+
+  </style>
+
+  <template>
+    <div id="container">
+      <div>
+        <content></content>
+
+        <form is="iron-form" id="contact">
+          <paper-input id="name" name="name" label="Your Name" required autocomplete="name"></paper-input>
+          
+          <gold-email-input id="email" name="email" required auto-validate error-message="Please enter a valid email" label="Your email" autocomplete="email"></gold-email-input>
+
+          <paper-input id="phone" name="phone" label="Your Phone Number" autocomplete="tel"></paper-input>
+          
+          <paper-textarea id="request" name="request" label="How can we help?" required></paper-textarea>
+          
+          <paper-button id="send" on-click="send" raised>Send</paper-button>
+        </form>
+
+        <paper-dialog id="required-notice">
+          <h2>Missing Fields</h2>
+
+          <paper-dialog-scrollable>
+            It appears you're missing some form items. Please try again.
+          </paper-dialog-scrollable>
+
+          <div class="buttons">
+            <paper-button dialog-dismiss>OK</paper-button>
+          </div>
+        </paper-dialog>
+
+        <paper-dialog id="success-notice">
+          <h2>Request Sent</h2>
+
+          <paper-dialog-scrollable>
+            Your request has been sent, we will be in contact with you shortly.
+          </paper-dialog-scrollable>
+
+          <div class="buttons">
+            <paper-button dialog-dismiss>OK</paper-button>
+          </div>
+        </paper-dialog>
+      </div>
+    </div>
+  </template>
+</dom-module>
+
+
+<!-- Registers custom element -->
+<script>
+Polymer({
+  is: 'real-time-contact',
+
+  properties: {
+    firebase: {
+      type: String
+    },
+    ref: {
+      computed: 'setFirebase(firebase)'
+    }
+  },
+
+  ready: function() {
+    // Ready to roll
+  },
+
+  setFirebase: function(firebase) {
+    return new Firebase(firebase);
+  },
+
+  validate: function(value, re) {
+    if (re === undefined) {
+      return value !== undefined && value !== '';
+    }
+    return re.test(value);
+  },
+
+  send: function(event) {
+    var name = this.$.name;
+    var email = this.$.email;
+    var phone = this.$.phone;
+    var request = this.$.request;
+
+    if (!this.validate(name.value) || !this.validate(request.value)) {
+      this.$['required-notice'].open();
+      return;
+    }
+
+    if (!email.validate()) {
+      return;
+    }
+
+    this.ref.push({
+        name: name.value,
+        email: email.value,
+        phone: phone.value,
+        request: request.value,
+        referer: window.location.pathname
+      });
+
+    this.$['success-notice'].open();
+  }
+});
+</script>
